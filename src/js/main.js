@@ -1,4 +1,3 @@
-
 /* ════════════════════════════════════════════════
    PRODUCT DATA
 ════════════════════════════════════════════════ */
@@ -68,14 +67,16 @@ const PRODUCTS = [
 /* ════════════════════════════════════════════════
    STATE (localStorage-backed)
 ════════════════════════════════════════════════ */
-let wishlist = JSON.parse(localStorage.getItem('luxe_wish') || '[]');
-let cart     = JSON.parse(localStorage.getItem('luxe_cart') || '[]');
+let wishlist  = JSON.parse(localStorage.getItem('luxe_wish')       || '[]');
+let cart      = JSON.parse(localStorage.getItem('luxe_cart')       || '[]');
+let bookmarks = JSON.parse(localStorage.getItem('luxe_bookmarks')  || '[]');
 
 /* ════════════════════════════════════════════════
    PRODUCT CARD HTML
 ════════════════════════════════════════════════ */
 function productCard(p) {
   const isWish   = wishlist.includes(p.id);
+  const isBm     = bookmarks.includes(p.id);
   const discount = Math.round((1 - p.price / p.old) * 100);
   const detailUrl = `product.html?id=${p.id}`;
   return `
@@ -93,6 +94,12 @@ function productCard(p) {
           aria-label="${isWish ? 'Remove from wishlist' : 'Add to wishlist'}"
           class="wish-trigger absolute top-3 right-3 w-8 h-8 bg-white dark:bg-dark-700 flex items-center justify-center shadow-sm ${isWish ? 'text-luxe-600' : 'text-stone-400'} hover:text-luxe-600 transition-all">
           <i class="${isWish ? 'fa-solid' : 'fa-regular'} fa-heart text-sm"></i>
+        </button>
+        <!-- Bookmark btn -->
+        <button onclick="event.preventDefault();toggleBookmark(${p.id},this)"
+          aria-label="${isBm ? 'Remove bookmark' : 'Bookmark'}"
+          class="absolute top-12 right-3 w-8 h-8 bg-white dark:bg-dark-700 flex items-center justify-center shadow-sm ${isBm ? 'text-luxe-600' : 'text-stone-400'} hover:text-luxe-600 transition-all opacity-0 group-hover:opacity-100">
+          <i class="${isBm ? 'fa-solid' : 'fa-regular'} fa-bookmark text-sm"></i>
         </button>
         <!-- Quick add -->
         <div class="quick-add absolute inset-x-0 bottom-0 p-3">
@@ -147,13 +154,37 @@ function addToCart(id) {
 }
 
 /* ════════════════════════════════════════════════
+   BOOKMARKS
+════════════════════════════════════════════════ */
+function toggleBookmark(id, btn) {
+  const idx = bookmarks.indexOf(id);
+  if (idx === -1) {
+    bookmarks.push(id);
+    btn.innerHTML = '<i class="fa-solid fa-bookmark text-sm"></i>';
+    btn.classList.add('text-luxe-600');
+    btn.classList.remove('text-stone-400');
+    showToast('Bookmarked 🔖');
+  } else {
+    bookmarks.splice(idx, 1);
+    btn.innerHTML = '<i class="fa-regular fa-bookmark text-sm"></i>';
+    btn.classList.remove('text-luxe-600');
+    btn.classList.add('text-stone-400');
+    showToast('Bookmark removed');
+  }
+  localStorage.setItem('luxe_bookmarks', JSON.stringify(bookmarks));
+  updateBadges();
+}
+
+/* ════════════════════════════════════════════════
    NAV BADGES
 ════════════════════════════════════════════════ */
 function updateBadges() {
-  const wb = document.getElementById('wish-badge');
-  const cb = document.getElementById('cart-badge');
-  if (wb) { wb.textContent = wishlist.length; wb.style.display = wishlist.length > 0 ? 'flex' : 'none'; }
-  if (cb) { cb.textContent = cart.length;     cb.style.display = cart.length     > 0 ? 'flex' : 'none'; }
+  const wb  = document.getElementById('wish-badge');
+  const cb  = document.getElementById('cart-badge');
+  const bmb = document.getElementById('bookmark-badge');
+  if (wb)  { wb.textContent  = wishlist.length;  wb.style.display  = wishlist.length  > 0 ? 'flex' : 'none'; }
+  if (cb)  { cb.textContent  = cart.length;       cb.style.display  = cart.length      > 0 ? 'flex' : 'none'; }
+  if (bmb) { bmb.textContent = bookmarks.length;  bmb.style.display = bookmarks.length > 0 ? 'flex' : 'none'; }
 }
 
 /* ════════════════════════════════════════════════
